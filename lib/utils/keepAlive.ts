@@ -6,7 +6,6 @@ type MinimalWS = {
 
 export function startKeepalive(ws: MinimalWS, intervalMs: number = 12000): ReturnType<typeof setInterval> {
   const timer = setInterval(() => {
-    // In 'ws' and browser WebSocket, OPEN is a static value on the constructor
     try {
       const OPEN = (ws as any)?.constructor?.OPEN ?? 1; // 1 is OPEN per ws
       if (ws.readyState === OPEN) {

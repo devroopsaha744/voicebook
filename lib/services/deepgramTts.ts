@@ -3,7 +3,6 @@ import { Buffer } from "buffer";
 const API_KEY = process.env.DEEPGRAM_API_KEY;
 if (!API_KEY) throw new Error("DEEPGRAM_API_KEY not set");
 
-// Deepgram REST Speak API: returns a single WAV buffer (PCM16 mono 48k) for the provided text
 export async function restSynthesizeBuffer(text: string): Promise<Buffer> {
   const url = `https://api.deepgram.com/v1/speak?model=aura-2-thalia-en&encoding=linear16&sample_rate=48000&container=wav`;
   const res = await fetch(url, {

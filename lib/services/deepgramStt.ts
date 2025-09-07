@@ -44,12 +44,12 @@ export class DeepgramSTTService {
         "&encoding=linear16" +
         "&sample_rate=48000" +
         "&channels=1" +
-        "";
+        "&smart_format=true" +
+        "&language=en-GB";
       this._last_url = url;
       return await new Promise<boolean>((resolve) => {
         try {
           const protocols = ["token", this.api_key || ""];
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
           const WSMod: any = require("ws");
           const WS: any = WSMod?.default ?? WSMod;
           const ws = new WS(url, protocols, { maxPayload: 2 ** 23 });
@@ -104,7 +104,6 @@ export class DeepgramSTTService {
         
         console.log("[STT DEBUG]", JSON.stringify(parsed, null, 2));
         
-        // Handle transcript events
         if (parsed && parsed.channel && Array.isArray(parsed.channel.alternatives)) {
           const alts = parsed.channel.alternatives || [];
           const alt = alts[0] || {};
@@ -117,7 +116,6 @@ export class DeepgramSTTService {
             } catch {}
           }
           
-          // Check for speech_final to trigger utterance end
           if (parsed.speech_final === true && transcript.trim()) {
             console.log("[STT] Speech final detected, triggering utterance end");
             if (this.utteranceEndCallback) {
@@ -129,7 +127,6 @@ export class DeepgramSTTService {
           }
         }
         
-        // Handle explicit UtteranceEnd events  
         if (parsed && parsed.type === "UtteranceEnd") {
           console.log("[STT] UtteranceEnd event detected");
           if (this.utteranceEndCallback) {

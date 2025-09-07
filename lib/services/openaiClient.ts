@@ -26,7 +26,7 @@ export class OpenAIClient {
     const key = process.env.GROQ_API_KEY || apiKey || process.env.OPENAI_API_KEY || "";
     const url = baseUrl || process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1";
     this.client = new OpenAI({ apiKey: key, baseURL: url });
-    this.defaultModel = model || process.env.LLM_MODEL || "moonshotai/kimi-k2-instruct-0905"; // valid on Groq
+    this.defaultModel = model || process.env.LLM_MODEL || "openai/gpt-oss-120b"; // valid on Groq
   }
 
   private getTools(): OpenAI.Chat.Completions.ChatCompletionTool[] {
@@ -91,11 +91,62 @@ export class OpenAIClient {
     return null;
   }
 
+  private loadFewshotExamplesFormatted(): string | null {
+    try {
+      const examplesPath = path.resolve(
+        process.cwd(),
+        "lib",
+        "prompts",
+        "fewshot_conversations.json"
+      );
+      if (!fs.existsSync(examplesPath)) return null;
+      const raw = fs.readFileSync(examplesPath, "utf-8");
+      const data = JSON.parse(raw);
+
+      if (!Array.isArray(data)) return null;
+
+      const chunks: string[] = [];
+      for (const conv of data) {
+        if (!Array.isArray(conv)) continue;
+        let pendingUser: string | null = null;
+        for (const turn of conv) {
+          if (!turn || typeof turn !== "object") continue;
+          const role = turn.role;
+          const content = typeof turn.content === "string" ? turn.content : "";
+          if (role === "user") {
+            pendingUser = content;
+          } else if (role === "assistant" && pendingUser !== null) {
+            chunks.push(
+              `<user_query>${pendingUser}</user_query>\n<assistant_response>${content}</assistant_response>`
+            );
+            pendingUser = null;
+          }
+        }
+      }
+
+      if (!chunks.length) return null;
+      return [
+        "# Examples (for reference only)",
+        "The following are illustrative examples only. Do not treat them as part of the active conversation. Use them as guidance for style and validation, then answer the user's current query directly.",
+        "",
+        chunks.join("\n\n"),
+      ].join("\n");
+    } catch {
+      return null;
+    }
+  }
+
   private maybePrependSystem(messages: ChatMessage[]): ChatMessage[] {
     if (messages.some((m) => m.role === "system")) return messages;
-    const sys = this.loadSystemPrompt();
-    if (sys) return [{ role: "system", content: sys }, ...messages];
-    return messages;
+
+    const base = this.loadSystemPrompt() || "You are a helpful assistant.";
+    const examples = this.loadFewshotExamplesFormatted();
+
+    const systemContent = examples
+      ? `${base}\n\n${examples}`
+      : base;
+
+    return [{ role: "system", content: systemContent }, ...messages];
   }
 
   async *chatStream(messages: ChatMessage[], model?: string) {

@@ -10,18 +10,15 @@ type ClientState = {
   stt: DeepgramSTTService;
   llm: OpenAIClient;
   redis: RedisStore;
-  // Transcript buffers
   lastInterim: string;
   lastFinal: string;
   processing: boolean;
-  // Queue of final transcripts awaiting LLM processing
   finalQueue: string[];
 };
 
 function tryParseJson(buf: Buffer): any | null {
   if (!buf || buf.length === 0) return null;
   const b = buf[0];
-  // quick precheck for '{' or '[' to avoid parsing raw audio most of the time
   if (b !== 0x7b && b !== 0x5b) return null;
   try {
     const s = buf.toString("utf8");
