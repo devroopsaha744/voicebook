@@ -1,0 +1,68 @@
+[
+  {
+    "ts": "2025-09-07T15:21:11.032Z",
+    "sessionId": "7a322dcb-a97d-44f2-8596-3a2db4a473a7",
+    "query": "Hello.",
+    "finalReceivedAt": 1757258470185,
+    "llmStartAt": 1757258470508,
+    "llmEndAt": 1757258471032,
+    "ttsStartAt": 1757258471032,
+    "queryToTtsStartMs": 847,
+    "llmDurationMs": 524
+  },
+  {
+    "ts": "2025-09-07T15:21:22.863Z",
+    "sessionId": "7a322dcb-a97d-44f2-8596-3a2db4a473a7",
+    "query": "My name is David.",
+    "finalReceivedAt": 1757258482205,
+    "llmStartAt": 1757258482532,
+    "llmEndAt": 1757258482863,
+    "ttsStartAt": 1757258482863,
+    "queryToTtsStartMs": 658,
+    "llmDurationMs": 331
+  },
+  {
+    "ts": "2025-09-07T15:21:34.742Z",
+    "sessionId": "7a322dcb-a97d-44f2-8596-3a2db4a473a7",
+    "query": "My email is david@gmail.com.",
+    "finalReceivedAt": 1757258493985,
+    "llmStartAt": 1757258494310,
+    "llmEndAt": 1757258494742,
+    "ttsStartAt": 1757258494742,
+    "queryToTtsStartMs": 757,
+    "llmDurationMs": 432
+  },
+  {
+    "ts": "2025-09-07T15:21:46.375Z",
+    "sessionId": "7a322dcb-a97d-44f2-8596-3a2db4a473a7",
+    "query": "Three days from today,",
+    "finalReceivedAt": 1757258505268,
+    "llmStartAt": 1757258505603,
+    "llmEndAt": 1757258506375,
+    "ttsStartAt": 1757258506375,
+    "queryToTtsStartMs": 1107,
+    "llmDurationMs": 772
+  },
+  {
+    "ts": "2025-09-07T15:22:06.499Z",
+    "sessionId": "7a322dcb-a97d-44f2-8596-3a2db4a473a7",
+    "query": "Yes. It is correct.",
+    "finalReceivedAt": 1757258525588,
+    "llmStartAt": 1757258525913,
+    "llmEndAt": 1757258526499,
+    "ttsStartAt": 1757258526499,
+    "queryToTtsStartMs": 911,
+    "llmDurationMs": 586
+  },
+  {
+    "ts": "2025-09-07T15:22:14.423Z",
+    "sessionId": "7a322dcb-a97d-44f2-8596-3a2db4a473a7",
+    "query": "Thanks.",
+    "finalReceivedAt": 1757258532833,
+    "llmStartAt": 1757258533165,
+    "llmEndAt": 1757258534423,
+    "ttsStartAt": 1757258534423,
+    "queryToTtsStartMs": 1590,
+    "llmDurationMs": 1258
+  }
+]

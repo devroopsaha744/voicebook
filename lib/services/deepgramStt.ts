@@ -33,7 +33,7 @@ export class DeepgramSTTService {
     if (this.ws || this._connecting) return true;
     this._connecting = true;
     try {
-      const endpointing = process.env.ENDPOINTING_MS || process.env.DEEPGRAM_ENDPOINTING_MS || "500";
+      const endpointing = process.env.ENDPOINTING_MS || process.env.DEEPGRAM_ENDPOINTING_MS || "100";
       const url =
         "wss://api.deepgram.com/v1/listen" +
         "?model=nova-3" +

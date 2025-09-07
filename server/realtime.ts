@@ -3,6 +3,7 @@ import { DeepgramSTTService } from "../lib/services/deepgramStt";
 import { OpenAIClient, ChatMessage } from "../lib/services/openaiClient";
 import { pollySynthesizeMp3 } from "../lib/services/awsPolly";
 import { RedisStore } from "../lib/utils/redisSession";
+import { appendLatency } from "../lib/utils/metrics";
 
 type ClientState = {
   ws: WebSocket;
@@ -10,15 +11,20 @@ type ClientState = {
   stt: DeepgramSTTService;
   llm: OpenAIClient;
   redis: RedisStore;
+  // Transcript buffers
   lastInterim: string;
   lastFinal: string;
   processing: boolean;
+  // Queue of final transcripts awaiting LLM processing
   finalQueue: string[];
+  // Timestamp when the last Deepgram final transcript arrived
+  lastFinalAt: number | null;
 };
 
 function tryParseJson(buf: Buffer): any | null {
   if (!buf || buf.length === 0) return null;
   const b = buf[0];
+  // quick precheck for '{' or '[' to avoid parsing raw audio most of the time
   if (b !== 0x7b && b !== 0x5b) return null;
   try {
     const s = buf.toString("utf8");
@@ -40,14 +46,17 @@ wss.on("connection", (ws) => {
     stt: new DeepgramSTTService(),
     llm: new OpenAIClient(),
     redis: new RedisStore(),
-  lastInterim: "",
-  lastFinal: "",
+    lastInterim: "",
+    lastFinal: "",
     processing: false,
-  finalQueue: [],
+    finalQueue: [],
+    lastFinalAt: null,
   };
 
   const sendJson = (obj: any) => {
-    try { if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj)); } catch {}
+    try {
+      if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(obj));
+    } catch {}
   };
 
   // Greet the client with a server hello (optional)
@@ -75,7 +84,9 @@ wss.on("connection", (ws) => {
       ];
 
       // One-shot LLM response (async network call; non-blocking event loop)
+      const llmStartAt = Date.now();
       const assistantText = await state.llm.chatComplete(messages);
+      const llmEndAt = Date.now();
       sendJson({ type: "assistant", text: assistantText });
 
       // TTS: AWS Polly MP3 (single full buffer)
@@ -83,6 +94,23 @@ wss.on("connection", (ws) => {
         (async () => {
           const speakText = assistantText.trim();
           try {
+            // Capture when TTS begins (before Polly call)
+            const ttsStartAt = Date.now();
+
+            // Record latency best-effort
+            const finalAt = state.lastFinalAt ?? llmStartAt;
+            appendLatency({
+              ts: new Date().toISOString(),
+              sessionId: state.sessionId,
+              query: next,
+              finalReceivedAt: finalAt,
+              llmStartAt,
+              llmEndAt,
+              ttsStartAt,
+              queryToTtsStartMs: Math.max(0, ttsStartAt - finalAt),
+              llmDurationMs: Math.max(0, llmEndAt - llmStartAt),
+            });
+
             const mp3 = await pollySynthesizeMp3(speakText);
             if (mp3?.length && ws.readyState === ws.OPEN) ws.send(mp3);
           } catch (e) {
@@ -113,6 +141,7 @@ wss.on("connection", (ws) => {
       if (isFinal) {
         state.lastFinal = transcript;
         state.lastInterim = "";
+        state.lastFinalAt = Date.now();
         sendJson({ type: "final", text: transcript });
         enqueueFinal(transcript);
       } else {
@@ -144,17 +173,17 @@ wss.on("connection", (ws) => {
           state.finalQueue.length = 0; // clear pending items
           state.lastInterim = "";
           state.lastFinal = "";
+          state.lastFinalAt = null;
           sendJson({ type: "stopped" });
           return;
         }
       } catch (e) {
         sendJson({ type: "error", message: String(e) });
       }
-  } else {
+    } else {
       // Treat anything else as binary audio
       try {
-    // console.log("[audio]", data.length, "bytes");
-  await state.stt.sendAudio(data);
+        await state.stt.sendAudio(data);
       } catch (e) {
         sendJson({ type: "error", message: String(e) });
       }
@@ -162,7 +191,9 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", async () => {
-    try { await state.stt.disconnect(); } catch {}
-  state.finalQueue.length = 0;
+    try {
+      await state.stt.disconnect();
+    } catch {}
+    state.finalQueue.length = 0;
   });
 });
