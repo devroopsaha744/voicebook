@@ -81,6 +81,46 @@ npm run dev:all
 
 http://localhost:3000
 
+## Sequence diagram
+
+### Realtime flow
+
+```mermaid
+sequenceDiagram
+	participant U as User (Mic)
+	participant C as Browser Client (app/page.tsx)
+	participant S as WS Server (server/realtime.ts)
+	participant DG as Deepgram STT (wss://api.deepgram.com/v1/listen)
+	participant R as Redis
+	participant LLM as Groq LLM (OpenAI API)
+	participant TTS as AWS Polly (MP3)
+
+	U->>C: Speak audio
+	C->>S: start { session_id }
+	Note over S,DG: Connect to Deepgram WS and start keepalive
+	C->>S: Stream PCM16 mono 48 kHz frames
+	S->>DG: Forward audio bytes
+	DG-->>S: interim transcript (is_final=false)
+	S-->>C: interim text
+	DG-->>S: final transcript (is_final=true or speech_final)
+	S->>S: enqueue final and processQueue()
+	S->>R: loadMessages(session_id)
+	S->>LLM: chat.complete(messages + user)
+	LLM-->>S: tool_call(get_present_date) or tool_call(store_on_csv)
+	S->>S: get_present_date() / store_on_csv()
+	S->>LLM: follow-up completion(messages + tool results)
+	LLM-->>S: assistant text
+	S-->>C: assistant text
+	S->>TTS: synthesize MP3
+	TTS-->>S: mp3 buffer
+	S-->>C: mp3 buffer on same WS
+	C->>C: decode and play audio
+	S->>R: saveMessages(updated)
+	C->>S: stop
+	S->>DG: close
+	Note over S,DG: stop keepalive
+```
+
 ## How it works end to end
 
 1) Browser capture and audio transport
@@ -175,4 +215,3 @@ Validation rules are primarily enforced through the prompt and examples to avoid
 5) lib/tools/tools.ts Local tools: present date and CSV append
 6) lib/utils/redisSession.ts Redis-backed conversation history store
 7) app/page.tsx Main landing page
-8) app/realtime/page.tsx Client UI for streaming audio and playing TTS
