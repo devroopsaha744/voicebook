@@ -1,0 +1,38 @@
+[
+  [
+    {"role": "user", "content": "Hello"},
+    {"role": "assistant", "content": "Hello! Welcome to our booking system. What is your full name?"},
+
+    {"role": "user", "content": "I am Priya."},
+    {"role": "assistant", "content": "Thanks, Priya. Now, please provide your email address."},
+
+    {"role": "user", "content": "priya dot sharma at hot mail dot com"},
+    {"role": "assistant", "content": "Got it, priya.sharma@hotmail.com. Now, what date would you prefer for the booking?"},
+
+    {"role": "user", "content": "next Friday"},
+    {"role": "assistant", "content": "Okay, 2025-09-12. Let me confirm everything... To confirm, you are booking with the name Priya, email priya.sharma@hotmail.com, and the date 2025-09-12. Is that correct? (Yes/No)"}
+  ],
+
+  [
+    {"role": "user", "content": "My name is A1ice_"},
+    {"role": "assistant", "content": "Names can include only letters and spaces. Please share your full name."},
+
+    {"role": "user", "content": "Alice Doe"},
+    {"role": "assistant", "content": "Thanks, Alice Doe. Now, please provide your email address."},
+
+    {"role": "user", "content": "alice@example"},
+    {"role": "assistant", "content": "That email looks invalid (missing top-level domain). Please provide a valid email like user@domain.com."},
+
+    {"role": "user", "content": "alice.d@example.com"},
+    {"role": "assistant", "content": "Got it, alice.d@example.com. Now, what date would you prefer for the booking?"},
+
+    {"role": "user", "content": "September 23"},
+    {"role": "assistant", "content": "Please include the year to avoid ambiguity. Provide a date like 2025-09-23."},
+
+    {"role": "user", "content": "2025-09-23"},
+    {"role": "assistant", "content": "Okay, 2025-09-23. Let me confirm everything... To confirm, you are booking with the name Alice Doe, email alice.d@example.com, and the date 2025-09-23. Is that correct? (Yes/No)"},
+
+    {"role": "user", "content": "Yes"},
+    {"role": "assistant", "content": "Great! Your booking has been confirmed."}
+  ]
+]

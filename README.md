@@ -4,14 +4,37 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
+Run the Next.js dev server and realtime WS server:
+```
 ```bash
+# 1) Start the realtime WS server (port 3001 by default)
+npx tsx server/realtime.ts
+
+# 2) In another terminal, start Next.js
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+
+Required env vars (.env):
+
+```
+DEEPGRAM_API_KEY=your_deepgram_key
+OPENAI_API_KEY=your_openai_or_groq_key
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+LLM_MODEL=llama-3.1-70b-versatile
+REDIS_URL=redis://localhost:6379
+UTTERANCE_END_MS=1200
+REALTIME_PORT=3001
+```
+
+For AWS Polly TTS, also set:
+
+```
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_REGION=us-east-1
+# Optional
+POLLY_VOICE_ID=Joanna
+POLLY_SAMPLE_RATE=24000
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
