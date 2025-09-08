@@ -1,9 +1,9 @@
 ## Voicebook Realtime Voice Agent
 
-This project is a realtime voice booking assistant that captures speech in the browser, streams it to a Node.js WebSocket backend, transcribes with Deepgram STT, invokes a Groq-hosted LLM, and returns low-latency audio responses synthesized by AWS Polly (MP3). it then automatically validates the user provided name, email and dates and then stores the details on a local CSV file.
+This project is a realtime voice booking assistant that captures speech in the browser, streams it to a Node.js WebSocket backend, transcribes with Deepgram STT, invokes a Groq-hosted LLM, and returns low-latency audio responses synthesized by ElevenLabs Flash TTS (MP3). It then validates the user-provided name, email, and date and stores the details in a local CSV file.
 
 Demo video
-https://www.youtube.com/watch?v=v1EAKRNMLhA
+https://www.youtube.com/watch?v=IiNXuUgZYUI
 
 ## Tech stack
 
@@ -11,7 +11,7 @@ https://www.youtube.com/watch?v=v1EAKRNMLhA
 2) Next.js app router frontend
 3) Deepgram realtime STT over WebSocket
 4) Groq LLM provider via OpenAI-compatible API
-5) AWS Polly for TTS (MP3 output)
+5) ElevenLabs Flash TTS for speech synthesis (MP3 output)
 6) Redis (ioredis) for conversation history persistence
 
 ## Prerequisites
@@ -20,8 +20,7 @@ https://www.youtube.com/watch?v=v1EAKRNMLhA
 2) An accessible Redis instance (local or remote)
 3) Deepgram API key
 4) Groq API key
-5) AWS credentials with access to Polly
-6) (Optional) ElevenLabs API key if using ElevenLabs TTS
+5) ElevenLabs API key
 
 ## Environment setup
 
@@ -44,13 +43,9 @@ GROQ_API_KEY=your_groq_api_key
 # Deepgram STT
 DEEPGRAM_API_KEY=your_deepgram_api_key
 
-# AWS Polly
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-AWS_REGION=us-east-1
-
-# ElevenLabs (optional)
+# ElevenLabs (required)
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
+# Optional voice override
 # ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
 ```
 
@@ -98,7 +93,7 @@ sequenceDiagram
 	participant DG as Deepgram STT (wss://api.deepgram.com/v1/listen)
 	participant R as Redis
 	participant LLM as Groq LLM (OpenAI API)
-	participant TTS as AWS Polly (MP3)
+	participant TTS as ElevenLabs TTS (MP3)
 
 	U->>C: Speak audio
 	C->>S: start { session_id }
@@ -159,9 +154,9 @@ Flow for tool calls:
 2) The assistant’s tool_calls are executed locally and results are attached as tool messages.
 3) A follow-up completion produces the final user-facing answer using the tool results. For normal Q&A without tools, the assistant responds directly in the first completion.
 
-4) TTS response with AWS Polly
+4) TTS response with ElevenLabs
 
-After the LLM generates text, the server synthesizes speech with AWS Polly to MP3 using pollySynthesizeMp3 (lib/services/awsPolly.ts). The MP3 buffer is sent over the same WebSocket to the browser. The client decodes and plays it immediately. MP3 keeps payloads small and decode/stream overhead low compared to raw PCM or WAV from other services.
+After the LLM generates text, the server synthesizes speech with ElevenLabs Flash to MP3 using elevenlabsSynthesizeMp3 (lib/services/elevenlabsTts.ts). The MP3 buffer is sent over the same WebSocket to the browser. The client decodes and plays it immediately. MP3 keeps payloads small and decode/stream overhead low compared to raw PCM or WAV.
 
 5) Session persistence in Redis
 
@@ -177,38 +172,53 @@ RedisStore (lib/utils/redisSession.ts) stores the rolling conversation history p
 
 1) Deepgram transport and endpointing
 
-Use Deepgram’s native WebSocket API with interim_results, vad_events, and endpointing. Lower endpointing values finalize utterances sooner. Keep-alive pings prevent idle connection drops when no audio is briefly flowing.
+Use Deepgram’s native WebSocket API with interim_results, vad_events, and endpointing. Lower endpointing values finalize utterances sooner. We reduced endpointing by ~400 ms (e.g., ~500 ms → ~100 ms) to trigger faster finals. Keep-alive pings prevent idle connection drops.
 
 2) Fast LLM provider
 
-Groq models are used via the OpenAI-compatible API for faster token generation compared to other providers. The model is configurable using LLM_MODEL.
+Groq models are used via the OpenAI-compatible API for faster token generation. The model is configurable using LLM_MODEL.
 
-3) Efficient TTS format
+3) Efficient, fast-start TTS
 
-Polly returns MP3, which is compact and decodes quickly in the browser. Alternative services often return raw PCM or WAV that increase payload size and client decode time.
+ElevenLabs Flash models return high-quality MP3 quickly. MP3 is compact and decodes fast in the browser.
 
 4) LLM invocation logic (non-blocking)
 
-The backend invokes the LLM only on Deepgram final transcripts. The LLM call runs asynchronously so the STT pipeline continues uninterrupted; live interim and final transcripts are not blocked while the model generates. TTS synthesis is launched in a detached async task so playback preparation does not delay STT.
+The backend invokes the LLM only on Deepgram final transcripts. The LLM call runs asynchronously so the STT pipeline continues uninterrupted; TTS synthesis is launched in a detached async task.
 
 5) Durable context
 
-Conversation history is persisted in Redis rather than in-memory arrays to avoid context loss on restart and to support multiple backend instances.
+Conversation history is persisted in Redis to avoid context loss on restart and support horizontal scaling.
 
 6) Response quality controls
 
-Balanced sampling parameters (top_p=0.9, temperature=0.2), a focused system prompt, and curated few-shot examples improve factual answers and validation without excessive tool usage.
+Balanced sampling parameters (top_p=0.9, temperature=0.2), a focused system prompt, and curated few-shot examples improve answers and validation without excessive tool usage.
 
 7) Targeted tool calling only
 
-Validation rules are primarily enforced through the prompt and examples to avoid latency from tool calls on every step. Tool calling is used only for tasks that require external data or side effects, such as getting the present date and writing bookings to CSV.
+Validation rules are primarily enforced through the prompt and examples to avoid latency from tool calls on every step. Tools are used only when needed (get current date, write to CSV).
+
+### Latency optimization and results
+
+- Achieved ~880 ms average query→TTS-start latency, measured via `logs/latency.json` (`queryToTtsStartMs`).
+- Main changes:
+	- Reduced Deepgram endpointing by ~400 ms to finalize utterances sooner.
+	- Switched TTS to ElevenLabs Flash models for faster synthesis with natural prosody.
+
+### Tried and dropped approaches
+
+- Streaming token-by-token audio generation: audio was often choppy and didn’t reduce end-to-first-audio latency (≈1100 ms avg).
+- Chunking-based TTS (chunk-by-chunk): inconsistent quality and no meaningful latency win.
+- Changing audio formats (raw PCM, Opus OGG, etc.): either increased decode/transport complexity or didn’t improve query→TTS-start; some variants degraded quality.
+
+Best trade-off: ElevenLabs Flash TTS + decreased Deepgram endpointing.
 
 ## Local testing checklist
 
 1) Confirm .env.local includes all required variables listed above
 2) Ensure Redis is reachable using REDIS_URL or host/port config
 3) Run npm run dev:all and open http://localhost:3000/
-4) Click Start, speak a complete sentence, wait for a final transcript, and listen for the Polly MP3 response
+4) Click Start, speak a complete sentence, wait for a final transcript, and listen for the ElevenLabs MP3 response
 5) Check bookings.csv after asking the assistant to save a booking (name, email, date)
 
 ## File map and key components
@@ -216,7 +226,7 @@ Validation rules are primarily enforced through the prompt and examples to avoid
 1) server/realtime.ts WebSocket server that orchestrates STT → LLM → TTS and Redis persistence
 2) lib/services/deepgramStt.ts Thin Deepgram WebSocket client with endpointing and VAD support
 3) lib/services/openaiClient.ts LLM wrapper for Groq with tool calling and prompt loading
-4) lib/services/awsPolly.ts Polly MP3 synthesis
+4) lib/services/elevenlabsTts.ts ElevenLabs MP3 synthesis
 5) lib/tools/tools.ts Local tools: present date and CSV append
 6) lib/utils/redisSession.ts Redis-backed conversation history store
 7) app/page.tsx Main landing page

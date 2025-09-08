@@ -89,15 +89,12 @@ wss.on("connection", (ws) => {
       const llmEndAt = Date.now();
       sendJson({ type: "assistant", text: assistantText });
 
-  // TTS: ElevenLabs MP3 (single full buffer)
       if (assistantText && assistantText.trim()) {
         (async () => {
           const speakText = assistantText.trim();
           try {
-            // Capture when TTS begins (before Polly call)
             const ttsStartAt = Date.now();
 
-            // Record latency best-effort
             const finalAt = state.lastFinalAt ?? llmStartAt;
             appendLatency({
               ts: new Date().toISOString(),
@@ -119,7 +116,6 @@ wss.on("connection", (ws) => {
         })();
       }
 
-      // Persist history
       const updated = [
         ...messages,
         { role: "assistant", content: assistantText },
@@ -129,12 +125,10 @@ wss.on("connection", (ws) => {
       sendJson({ type: "error", message: e?.message || String(e) });
     } finally {
       state.processing = false;
-      // Process next queued final, if any
       if (state.finalQueue.length > 0) void processQueue();
     }
   };
 
-  // STT callbacks: stream interim; enqueue only final transcripts
   state.stt.setCallbacks(
     (transcript, isFinal) => {
       if (!transcript) return;
@@ -155,10 +149,8 @@ wss.on("connection", (ws) => {
     undefined // ignore Deepgram utterance events
   );
 
-  // Removed silence-based LLM invocation; LLM now triggers only on Deepgram final transcripts.
 
   ws.on("message", async (data: Buffer) => {
-    // Distinguish control JSON vs. binary audio robustly
     const msg = tryParseJson(data);
     if (msg && typeof msg === "object") {
       try {
@@ -170,7 +162,7 @@ wss.on("connection", (ws) => {
         }
         if (msg.type === "stop") {
           await state.stt.disconnect();
-          state.finalQueue.length = 0; // clear pending items
+          state.finalQueue.length = 0; 
           state.lastInterim = "";
           state.lastFinal = "";
           state.lastFinalAt = null;
@@ -181,7 +173,6 @@ wss.on("connection", (ws) => {
         sendJson({ type: "error", message: String(e) });
       }
     } else {
-      // Treat anything else as binary audio
       try {
         await state.stt.sendAudio(data);
       } catch (e) {

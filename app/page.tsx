@@ -44,13 +44,10 @@ export default function Home() {
     };
   }, []);
 
-  // Auto-connect on mount
   useEffect(() => {
     void connect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto scroll to bottom when messages/interim change
   useEffect(() => {
     const el = chatRef.current;
     if (!el) return;
@@ -70,7 +67,6 @@ export default function Home() {
     console.log("[client] Playing audio buffer:", buf.byteLength, "bytes");
 
     try {
-      // Recreate context if missing or closed
       let ctx = audioCtxRef.current as AudioContext | null;
       if (!ctx || ctx.state === "closed") {
         ctx = new AudioContext({ sampleRate: 48000 });
@@ -82,7 +78,7 @@ export default function Home() {
       }
       if (!gainNodeRef.current) {
         const g = ctx.createGain();
-        g.gain.value = 1.35; // boost TTS level a bit
+        g.gain.value = 1.35; 
         g.connect(ctx.destination);
         gainNodeRef.current = g;
         console.log("[client] Created gain node");
@@ -90,18 +86,16 @@ export default function Home() {
 
       let audioBuf: AudioBuffer;
       try {
-        // Try codec decode first (handles mp3/wav/ogg)
         audioBuf = await new Promise<AudioBuffer>((resolve, reject) =>
           ctx!.decodeAudioData(buf.slice(0), resolve, reject)
         );
         console.log("[client] Decoded via decodeAudioData", audioBuf.duration.toFixed(2), "s");
       } catch {
-        // Fallback to manual PCM16/WAV path (legacy)
         const u8 = new Uint8Array(buf);
         const isWav = u8.length > 12 && u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46 && u8[8] === 0x57 && u8[9] === 0x41 && u8[10] === 0x56 && u8[11] === 0x45; // 'RIFF....WAVE'
         let pcm16: Int16Array;
         if (isWav) {
-          let offset = 12; // skip RIFF header
+          let offset = 12; 
           let dataStart = -1;
           let dataLen = 0;
           while (offset + 8 <= u8.length) {
@@ -159,7 +153,6 @@ export default function Home() {
         const msg = JSON.parse(ev.data);
         if (msg.type === "ready") {
           setStatus("connected");
-          // Ensure audio can play after handshake
           const ctx = audioCtxRef.current;
           if (ctx && ctx.state !== "running") {
             ctx.resume().catch(() => {});
@@ -170,7 +163,6 @@ export default function Home() {
           setInterim("");
           setMessages((m) => [...m, { id: crypto.randomUUID(), role: "user", text: msg.text }]);
         } else if (msg.type === "assistant") {
-          // One-shot assistant response
           console.log("[client] Received assistant message:", msg.text);
           setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", text: msg.text }]);
         } else if (msg.type === "error") {
@@ -179,7 +171,6 @@ export default function Home() {
           setStatus("error");
         }
       } else if (ev.data instanceof ArrayBuffer) {
-        // Single full audio buffer per response
         console.log("[client] Received audio buffer:", ev.data.byteLength, "bytes");
         queuePlayback(ev.data);
       }
