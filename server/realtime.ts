@@ -89,7 +89,7 @@ wss.on("connection", (ws) => {
       const llmEndAt = Date.now();
       sendJson({ type: "assistant", text: assistantText });
 
-      // TTS: AWS Polly MP3 (single full buffer)
+  // TTS: ElevenLabs MP3 (single full buffer)
       if (assistantText && assistantText.trim()) {
         (async () => {
           const speakText = assistantText.trim();

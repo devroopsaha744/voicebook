@@ -53,5 +53,82 @@
     "ttsStartAt": 1757327767544,
     "queryToTtsStartMs": 973,
     "llmDurationMs": 641
+  },
+  {
+    "ts": "2025-09-08T12:52:33.448Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "Hello?",
+    "finalReceivedAt": 1757335952633,
+    "llmStartAt": 1757335952975,
+    "llmEndAt": 1757335953447,
+    "ttsStartAt": 1757335953448,
+    "queryToTtsStartMs": 815,
+    "llmDurationMs": 472
+  },
+  {
+    "ts": "2025-09-08T12:52:44.595Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "My name is David.",
+    "finalReceivedAt": 1757335963858,
+    "llmStartAt": 1757335964173,
+    "llmEndAt": 1757335964594,
+    "ttsStartAt": 1757335964595,
+    "queryToTtsStartMs": 737,
+    "llmDurationMs": 421
+  },
+  {
+    "ts": "2025-09-08T12:52:53.558Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "David@Hotmail.com.",
+    "finalReceivedAt": 1757335972704,
+    "llmStartAt": 1757335973028,
+    "llmEndAt": 1757335973558,
+    "ttsStartAt": 1757335973558,
+    "queryToTtsStartMs": 854,
+    "llmDurationMs": 530
+  },
+  {
+    "ts": "2025-09-08T12:53:05.137Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "Three days from today.",
+    "finalReceivedAt": 1757335983878,
+    "llmStartAt": 1757335984217,
+    "llmEndAt": 1757335985136,
+    "ttsStartAt": 1757335985137,
+    "queryToTtsStartMs": 1259,
+    "llmDurationMs": 919
+  },
+  {
+    "ts": "2025-09-08T12:53:24.883Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "I want to change my email.",
+    "finalReceivedAt": 1757336004196,
+    "llmStartAt": 1757336004508,
+    "llmEndAt": 1757336004883,
+    "ttsStartAt": 1757336004883,
+    "queryToTtsStartMs": 687,
+    "llmDurationMs": 375
+  },
+  {
+    "ts": "2025-09-08T12:53:32.928Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "David@gmail.com is my new email.",
+    "finalReceivedAt": 1757336012071,
+    "llmStartAt": 1757336012388,
+    "llmEndAt": 1757336012928,
+    "ttsStartAt": 1757336012928,
+    "queryToTtsStartMs": 857,
+    "llmDurationMs": 540
+  },
+  {
+    "ts": "2025-09-08T12:53:52.560Z",
+    "sessionId": "c0ecaafd-048b-455d-9f6d-ef7865dfe285",
+    "query": "Yes. It is correct.",
+    "finalReceivedAt": 1757336031583,
+    "llmStartAt": 1757336031902,
+    "llmEndAt": 1757336032560,
+    "ttsStartAt": 1757336032560,
+    "queryToTtsStartMs": 977,
+    "llmDurationMs": 658
   }
 ]
