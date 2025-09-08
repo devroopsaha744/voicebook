@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { DeepgramSTTService } from "../lib/services/deepgramStt";
 import { OpenAIClient, ChatMessage } from "../lib/services/openaiClient";
-import { pollySynthesizeMp3 } from "../lib/services/awsPolly";
+import { elevenlabsSynthesizeMp3 } from "../lib/services/elevenlabsTts";
 import { RedisStore } from "../lib/utils/redisSession";
 import { appendLatency } from "../lib/utils/metrics";
 
@@ -111,7 +111,7 @@ wss.on("connection", (ws) => {
               llmDurationMs: Math.max(0, llmEndAt - llmStartAt),
             });
 
-            const mp3 = await pollySynthesizeMp3(speakText);
+            const mp3 = await elevenlabsSynthesizeMp3(speakText);
             if (mp3?.length && ws.readyState === ws.OPEN) ws.send(mp3);
           } catch (e) {
             sendJson({ type: "error", message: `TTS failed: ${String(e)}` });

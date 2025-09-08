@@ -21,6 +21,7 @@ https://www.youtube.com/watch?v=v1EAKRNMLhA
 3) Deepgram API key
 4) Groq API key
 5) AWS credentials with access to Polly
+6) (Optional) ElevenLabs API key if using ElevenLabs TTS
 
 ## Environment setup
 
@@ -47,6 +48,10 @@ DEEPGRAM_API_KEY=your_deepgram_api_key
 AWS_ACCESS_KEY_ID=your_aws_access_key_id
 AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 AWS_REGION=us-east-1
+
+# ElevenLabs (optional)
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+# ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
 ```
 
 ## Install and run locally
